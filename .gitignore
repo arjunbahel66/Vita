@@ -1,0 +1,76 @@
+# ---------------------------------------------------------------
+# HEALTH DATA — never commit. See CLAUDE.md section 4.1.
+# The Health export contains every datapoint the phone has ever
+# recorded. It must not enter version control under any circumstance.
+# ---------------------------------------------------------------
+export.xml
+export_cda.xml
+apple_health_export/
+apple_health_export*.zip
+*_health_export*
+**/HealthExport/
+
+# ---------------------------------------------------------------
+# MODEL WEIGHTS — ~1 GB, re-downloadable from Hugging Face.
+# ---------------------------------------------------------------
+*.safetensors
+*.gguf
+*.mlpackage
+models/
+.cache/huggingface/
+
+# ---------------------------------------------------------------
+# Xcode
+# ---------------------------------------------------------------
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Xcode project user-specific files (keep the shared scheme, drop the rest)
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+*.xcodeproj/project.xcworkspace/*
+!*.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+!*.xcodeproj/project.xcworkspace/xcshareddata/
+*.xcworkspace/xcuserdata/
+
+# ---------------------------------------------------------------
+# Swift Package Manager
+# ---------------------------------------------------------------
+.build/
+.swiftpm/
+Packages/
+Package.resolved
+
+# ---------------------------------------------------------------
+# Signing — never commit certificates or profiles
+# ---------------------------------------------------------------
+*.mobileprovision
+*.provisionprofile
+*.p12
+*.cer
+*.certSigningRequest
+
+# ---------------------------------------------------------------
+# macOS
+# ---------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ---------------------------------------------------------------
+# Claude Code — local settings are machine-specific
+# ---------------------------------------------------------------
+.claude/settings.local.json
