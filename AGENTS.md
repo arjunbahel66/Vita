@@ -1,15 +1,11 @@
-# Vita — Build Spec for Claude Code
+# Vita — Build Spec for Codex
 
 Privacy-first iPhone app. It reads Apple Health data plus lab values the user has entered, then uses a **small open-source LLM running entirely on the device** to produce plain-language observations, low-risk suggestions and questions for a doctor. **No cloud, no accounts, no diagnosis.**
 
 - **Owner:** Arjun Bahel (sole user, lives with NAFLD)
-- **Target device:** iPhone 14 Pro (A16, 6 GB RAM), **iOS 17.3.1**, deployed from Xcode
-- **Mac:** macOS 15.6 Sequoia → **Xcode 16.4** (Swift 6.1). See section 2.1.
+- **Target device:** iPhone 14 Pro (A16, 6 GB RAM), deployed from Xcode
 - **Signing:** **Free Apple ID (Personal Team). No paid Apple Developer Program.** This constrains the design — see section 2.1.
 - **Time budget:** two 3-hour sprints (6 hours total). Do the riskiest steps first and keep everything else simple.
-
-> **Don't let the phone auto-update.** Xcode 16.4 carries the iOS 18.5 SDK. If the 14 Pro
-> jumps to iOS 26 it will refuse to deploy, forcing a macOS 27 upgrade mid-sprint.
 
 ---
 
@@ -34,8 +30,7 @@ Privacy-first iPhone app. It reads Apple Health data plus lab values the user ha
 | Structured output | `MLXGuidedGeneration` — JSON Schema constrained decoding |
 | Model | `mlx-community/Qwen3-1.7B-4bit` (~1 GB) |
 | Persistence | None needed. Current lab values may go in UserDefaults to avoid retyping. That's not history. |
-| Pure logic | **`VitaCore`**, a local Swift package — see section 3 |
-| Tests | **Swift Testing** (`import Testing`), run with `swift test` on macOS. Not XCTest — see 2.1 |
+| Tests | XCTest for the pure-Swift logic |
 
 ### 2.1 Why no HealthKit (read this before changing anything)
 
@@ -55,14 +50,6 @@ Consequences to respect:
 - **No `increased-memory-limit`.** Stay on the 1.7B model. Do not attempt the 3B upgrade.
 - **Free provisioning expires after 7 days.** Rebuild from Xcode to keep it running. Also capped at 3 devices / 10 App IDs / 3 installed apps.
 - Health data is a **snapshot from the last export**, not live.
-
-### 2.1a Toolchain constraints
-
-macOS 15.6 caps Xcode at **16.4** (Xcode 26 needs macOS 27). Consequences:
-
-- **The Metal toolchain is still bundled.** `xcodebuild -downloadComponent MetalToolchain` is an Xcode 26+ problem and does not apply.
-- **No iOS simulator runtime.** Not downloaded — it's 8.5 GB, and we build to the device. Logic tests run on macOS instead (section 3), which is faster than a simulator would have been and sidesteps the Xcode 26 *"Logic Testing Unavailable"* bug on physical devices.
-- **XCTest is unavailable outside Xcode.** Command Line Tools ship Swift Testing but not XCTest, so `VitaCore` uses `import Testing`. This also works in Xcode 16, so it isn't a stopgap.
 
 *If a paid account ever materialises (worth asking MIT — they may hold an institutional membership): add `HealthKitService` conforming to the same `HealthService` protocol and swap it in. Nothing downstream changes.*
 
@@ -85,46 +72,39 @@ Net: effectively no special entitlements. Signing is plain Personal Team.
 
 ## 3. Project structure
 
-Two pieces: a local Swift package holding everything that must be **correct**, and an
-app target holding everything that must look good (SwiftUI) or sound good (MLX).
-
 ```
-VitaCore/                          ← Swift package. No UI, no MLX, no iOS-only APIs.
-  Package.swift                    //   Builds for macOS so `swift test` needs no
-  Sources/VitaCore/                //   simulator and no device.
-    LabValue.swift                 // LabKind, ReferenceRange, classification
-    HealthSnapshot.swift           // MetricSeries: averages, trends, coverage
-    FactSheet.swift                // the compact block fed to the LLM
-    Insights.swift                 // Codable + JSON schema for guided generation
-    InsightParser.swift            // strips <think>, decodes JSON
-    Guardrail.swift                // post-generation safety filter
-    HealthExportParser.swift       // streaming XMLParser over export.xml  [M2]
-  Tests/VitaCoreTests/
-    LabRangeTests.swift
-    MetricSeriesTests.swift
-    FactSheetTests.swift
-    InsightParserTests.swift
-    GuardrailTests.swift
-    HealthExportParserTests.swift  [M2]
-
-Vita/                              ← iOS app target. Depends on VitaCore.
+Vita/
   VitaApp.swift
+
+  Models/
+    HealthSnapshot.swift      // 30-day metrics + derived stats
+    LabValue.swift            // LabKind enum, value, unit, ref range, confirmed flag
+    FactSheet.swift           // builds the compact text block fed to the LLM
+    Insights.swift            // Codable struct for guided generation
+
   Services/
-    HealthService.swift            // protocol + MockHealthService
-    HealthExportService.swift      // file import, hands bytes to the parser
-    LLMService.swift               // protocol + MLXLLMService
-    PromptBuilder.swift            // system prompt + task prompts
+    HealthService.swift       // protocol + MockHealthService
+    HealthExportService.swift // streaming XML parser over export.xml
+    LLMService.swift          // protocol + MLXLLMService
+    PromptBuilder.swift       // system prompt + task prompts
+    InsightParser.swift       // strips <think>, decodes JSON
+    Guardrail.swift           // post-generation safety filter
+
   Views/
-    ContentView.swift              // single scrolling screen
+    ContentView.swift         // single scrolling screen
     DisclaimerBanner.swift
     HealthCard.swift
     LabsCard.swift
     InsightsCard.swift
     AskCard.swift
-```
 
-The split is structural, not stylistic: because `VitaCore` cannot import MLX, the tests
-**cannot** accidentally link it. That was previously a build setting you could get wrong.
+VitaTests/                    // Host Application: None — must not link MLX
+  FactSheetTests.swift
+  LabRangeTests.swift
+  GuardrailTests.swift
+  InsightParserTests.swift
+  HealthExportParserTests.swift
+```
 
 ---
 
@@ -305,7 +285,7 @@ Stop at each ✅ checkpoint and confirm it works before moving on.
 
 ### Sprint 1
 
-- **M0 — Skeleton on device (~30 min).** Install Xcode 16.4 from `developer.apple.com/download/all` (the App Store only offers the newest build, which needs macOS 27). Point the toolchain at it with `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`. New iOS App project, SwiftUI, deployment target iOS 17.0, free Personal Team signing. Add `VitaCore` as a local package dependency. Skip the iOS simulator runtime. ✅ A blank app launches on the iPhone 14 Pro.
+- **M0 — Skeleton on device (~30 min).** Xcode project, free Personal Team signing. **Run `xcodebuild -downloadComponent MetalToolchain` now** — on Xcode 26+ the Metal toolchain isn't bundled and MLX will fail to build without it. Set the test bundle's **Host Application to None** so tests never link MLX. ✅ A blank app launches on the iPhone 14 Pro.
 
 - **M1 — Model hello world (~60 min).** Add `ml-explore/mlx-swift-lm` via SPM, write `MLXLLMService`, and a debug button that streams a reply to "Say hello in one sentence." ✅ Text streams on the real phone. Log load time, tokens/sec and peak memory.
 
@@ -337,11 +317,10 @@ Stop at each ✅ checkpoint and confirm it works before moving on.
 
 ---
 
-## 7. Working agreements for Claude Code
+## 7. Working agreements for Codex
 
 - Read this file first. Work one milestone at a time and report when each ✅ is reached.
-- All pure logic goes in `VitaCore` with tests. Run them with `swift test` from the package directory — it takes milliseconds and needs neither Xcode nor a device.
-- If a guardrail test fails on text that *should* pass, treat it as a bug in the rule, not in the test. The fact sheet contains strings like `140 mg/dL` and the prompt tells the model to quote numbers exactly, so an over-broad rule fires on correct output.
+- Write unit tests for all pure logic (`FactSheet`, `LabRange`, `Guardrail`, `InsightParser`, `HealthExportParser`) and run them with `xcodebuild test` on a Simulator. The test bundle must not link MLX.
 - Arjun handles signing, device deployment and anything else in the Xcode GUI. When a step needs him, say exactly what to click.
 - Check the current `mlx-swift-lm` README for the real API before writing model code. Don't rely on memory.
 - Prefer the simplest thing that works. Six hours total.
