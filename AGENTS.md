@@ -1,4 +1,4 @@
-# Vita — Build Spec for Claude Code
+# Vita — Build Spec for Codex
 
 Privacy-first iPhone app. It reads Apple Health data plus lab values the user has entered, then uses a **small open-source LLM running entirely on the device** to produce plain-language observations, low-risk suggestions and questions for a doctor. **No cloud, no accounts, no diagnosis.**
 
@@ -30,8 +30,8 @@ Privacy-first iPhone app. It reads Apple Health data plus lab values the user ha
 | :-- | :-- |
 | UI | SwiftUI, iOS 17+ minimum |
 | Health data | **Health app XML export, parsed on-device.** NOT the HealthKit API — see 2.1 |
-| On-device LLM | **MLX Swift** — `ml-explore/mlx-swift-lm` **pinned to 3.31.4**, see 2.1a |
-| Structured output | **Not available.** Prompt for JSON, parse defensively — see 2.1a |
+| On-device LLM | **MLX Swift** — `ml-explore/mlx-swift-lm` (the old `mlx-swift-examples` repo has split up; this is the current one) |
+| Structured output | `MLXGuidedGeneration` — JSON Schema constrained decoding |
 | Model | `mlx-community/Qwen3-1.7B-4bit` (~1 GB) |
 | Persistence | None needed. Current lab values may go in UserDefaults to avoid retyping. That's not history. |
 | Pure logic | **`VitaCore`**, a local Swift package — see section 3 |
@@ -63,33 +63,6 @@ macOS 15.6 caps Xcode at **16.4** (Xcode 26 needs macOS 27). Consequences:
 - **The Metal toolchain is still bundled.** `xcodebuild -downloadComponent MetalToolchain` is an Xcode 26+ problem and does not apply.
 - **No iOS simulator runtime.** Not downloaded — it's 8.5 GB, and we build to the device. Logic tests run on macOS instead (section 3), which is faster than a simulator would have been and sidesteps the Xcode 26 *"Logic Testing Unavailable"* bug on physical devices.
 - **XCTest is unavailable outside Xcode.** Command Line Tools ship Swift Testing but not XCTest, so `VitaCore` uses `import Testing`. This also works in Xcode 16, so it isn't a stopgap.
-
-- **`mlx-swift-lm` is pinned to 3.31.4.** Version 3.32.3 declares `swift-tools-version: 6.2`, and Xcode 16.4 ships Swift 6.1, so it cannot resolve at all:
-  ```
-  'mlx-swift-lm' 3.32.3 contains incompatible tools version (6.2.0)
-  ```
-  3.31.4 is the newest release built with 6.1. Use **Up to Next Minor Version** from 3.31.4 — an Up-to-Next-Major rule lets SPM reach 3.32.3 and fail again.
-
-- **`MLXGuidedGeneration` does not exist in 3.31.4.** It was added in 3.32, so JSON-Schema constrained decoding is out of reach until macOS 27 / Xcode 26. M4 asks for JSON in the prompt instead and relies on `InsightParser` to recover it — the fence stripping, brace counting and `.raw` fallback are the mitigation, not a nicety.
-
-- **Three packages, not one.** 3.x decoupled the downloader and tokenizer, so the `MLXHuggingFace` macro expands into code requiring `HuggingFace` and `Tokenizers`:
-  | Package | Rule | Products |
-  | :-- | :-- | :-- |
-  | `github.com/ml-explore/mlx-swift-lm` | Up to Next Minor from **3.31.4** | `MLXLLM`, `MLXLMCommon`, `MLXHuggingFace` |
-  | `github.com/huggingface/swift-huggingface` | Up to Next Major from 0.9.0 | `HuggingFace` |
-  | `github.com/huggingface/swift-transformers` | Up to Next Major from 1.3.0 | `Tokenizers` |
-
-  Resolves to 30 packages — swift-huggingface pulls a NIO and crypto tree. Xcode will also show a macro trust prompt; builds fail until it is approved.
-
-- **Verified API at 3.31.4** (read from the checkout, not the README):
-  ```swift
-  let config = ModelConfiguration(id: "mlx-community/Qwen3-1.7B-4bit")
-  let model = try await #huggingFaceLoadModelContainer(configuration: config) { progress in ... }
-  let session = ChatSession(model, instructions: systemPrompt,
-                            generateParameters: GenerateParameters(temperature: 0.3, topP: 0.9))
-  for try await chunk in session.streamResponse(to: prompt) { ... }
-  ```
-  `GenerateParameters` carries `temperature`, `topP`, `maxTokens`, `repetitionPenalty`.
 
 *If a paid account ever materialises (worth asking MIT — they may hold an institutional membership): add `HealthKitService` conforming to the same `HealthService` protocol and swap it in. Nothing downstream changes.*
 
@@ -372,7 +345,7 @@ Stop at each ✅ checkpoint and confirm it works before moving on.
 
 ---
 
-## 7. Working agreements for Claude Code
+## 7. Working agreements for Codex
 
 - Read this file first. Work one milestone at a time and report when each ✅ is reached.
 - All pure logic goes in `VitaCore` with tests. Run them with `swift test` from the package directory — it takes milliseconds and needs neither Xcode nor a device.

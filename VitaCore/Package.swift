@@ -9,7 +9,10 @@ let package = Package(
     name: "VitaCore",
     platforms: [
         .iOS(.v17),
-        .macOS(.v13),
+        // macOS 14 to match mlx-swift-lm, which the app target also links.
+        // VitaCore itself needs nothing newer than 13; this only keeps the
+        // package graph consistent. Tests run on the Mac, which is on 15.6.
+        .macOS(.v14),
     ],
     products: [
         .library(name: "VitaCore", targets: ["VitaCore"]),
