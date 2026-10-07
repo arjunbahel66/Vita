@@ -107,8 +107,12 @@ VitaCore/                          ← Swift package. No UI, no MLX, no iOS-only
     GuardrailTests.swift
     HealthExportParserTests.swift  [M2]
 
-Vita/                              ← iOS app target. Depends on VitaCore.
+Vita.xcodeproj                     ← at the repo root, not nested
+
+App/                               ← iOS app target. Depends on VitaCore.
   VitaApp.swift
+  Vita.entitlements                // macOS sandbox leftovers; inert on iOS. Remove at M7.
+  Assets.xcassets/
   Services/
     HealthService.swift            // protocol + MockHealthService
     HealthExportService.swift      // file import, hands bytes to the parser
@@ -122,6 +126,10 @@ Vita/                              ← iOS app target. Depends on VitaCore.
     InsightsCard.swift
     AskCard.swift
 ```
+
+The app folder is `App/`, not `Vita/` — the default Xcode layout nested `Vita/Vita/Vita/`
+three deep. `App/` is a PBXFileSystemSynchronizedRootGroup, so files added to the folder
+appear in Xcode without editing the project file.
 
 The split is structural, not stylistic: because `VitaCore` cannot import MLX, the tests
 **cannot** accidentally link it. That was previously a build setting you could get wrong.
