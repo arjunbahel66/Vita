@@ -15,7 +15,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		83E51A613075EE950003D8DC /* Vita */ = {
+		83E51A613075EE950003D8DC /* App */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = App;
 			sourceTree = "<group>";
@@ -37,7 +37,7 @@
 		83E51A563075EE950003D8DC = {
 			isa = PBXGroup;
 			children = (
-				83E51A613075EE950003D8DC /* Vita */,
+				83E51A613075EE950003D8DC /* App */,
 				83E51A603075EE950003D8DC /* Products */,
 			);
 			sourceTree = "<group>";
@@ -66,7 +66,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				83E51A613075EE950003D8DC /* Vita */,
+				83E51A613075EE950003D8DC /* App */,
 			);
 			name = Vita;
 			packageProductDependencies = (
@@ -101,7 +101,7 @@
 			mainGroup = 83E51A563075EE950003D8DC;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				83E51A6E3075F1E50003D8DC /* XCLocalSwiftPackageReference "../VitaCore" */,
+				83E51A6E3075F1E50003D8DC /* XCLocalSwiftPackageReference "VitaCore" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 83E51A603075EE950003D8DC /* Products */;
@@ -256,6 +256,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/Vita.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YWPCY798F6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -294,6 +295,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/Vita.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YWPCY798F6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
@@ -348,7 +350,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		83E51A6E3075F1E50003D8DC /* XCLocalSwiftPackageReference "../VitaCore" */ = {
+		83E51A6E3075F1E50003D8DC /* XCLocalSwiftPackageReference "VitaCore" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = VitaCore;
 		};
