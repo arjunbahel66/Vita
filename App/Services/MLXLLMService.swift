@@ -27,12 +27,17 @@ final class MLXLLMService: LLMService {
 
     /// Cap on MLX's buffer-reuse cache.
     ///
-    /// MLX keeps freed GPU buffers around to avoid reallocating. That is a good trade
-    /// on a Mac and a dangerous one here: with no `increased-memory-limit` entitlement
-    /// the app gets the default iOS ceiling, and an unbounded cache on top of ~1 GB of
-    /// weights is how you get killed with no error message. 32 MB keeps the reuse
-    /// benefit without letting the cache become the thing that kills us.
-    private let gpuCacheLimit = 32 * 1024 * 1024
+    /// MLX keeps freed GPU buffers around so it can reuse them instead of reallocating
+    /// between operations. Starving this cache is slow: the first device run used a
+    /// 32 MB cap and managed only 3.5 tokens/sec.
+    ///
+    /// That cap was set defensively, before anything was measured. Measurement showed
+    /// peak GPU use of 978 MB against roughly 2–3 GB available on a 6 GB device, so
+    /// there is over a gigabyte spare and no reason to be that frugal. 256 MB buys
+    /// back the reuse without approaching the ceiling that would get the app killed.
+    ///
+    /// Revisit this if peak memory ever climbs near 1.8 GB.
+    private let gpuCacheLimit = 256 * 1024 * 1024
 
     // MARK: - Loading
 
