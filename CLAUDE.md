@@ -342,7 +342,26 @@ Stop at each ✅ checkpoint and confirm it works before moving on.
 
 - **M0 — Skeleton on device (~30 min).** Install Xcode 16.4 from `developer.apple.com/download/all` (the App Store only offers the newest build, which needs macOS 27). Point the toolchain at it with `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`. New iOS App project, SwiftUI, deployment target iOS 17.0, free Personal Team signing. Add `VitaCore` as a local package dependency. Skip the iOS simulator runtime. ✅ A blank app launches on the iPhone 14 Pro.
 
-- **M1 — Model hello world (~60 min).** Add `ml-explore/mlx-swift-lm` via SPM, write `MLXLLMService`, and a debug button that streams a reply to "Say hello in one sentence." ✅ Text streams on the real phone. Log load time, tokens/sec and peak memory.
+- **M1 — Model hello world. ✅ DONE.** Qwen3-1.7B-4bit streams on the iPhone 14 Pro.
+
+  Measured on device:
+
+  | | |
+  | :-- | :-- |
+  | Tokens/sec | **22.2** |
+  | Peak GPU memory | **982 MB** |
+  | Load, warm | **2.2 s** |
+  | Load, cold | **~84 s** |
+
+  **The GPU cache cap is the single biggest performance lever.** At 32 MB the model
+  managed 3.5 tok/s; at 256 MB it manages 22.2 — a 6.3× difference for 4 MB more peak
+  memory. Do not lower it without re-measuring.
+
+  Cold load is slow because the weights have to be faulted in from disk; 2.2 s is the
+  warm path with pages already resident. Budget for ~80 s after a reboot, and consider
+  warming the model in the background at launch.
+
+  Headroom: 982 MB against roughly 2–3 GB available on a 6 GB device.
 
 - **M2 — Health export + FactSheet (~60 min).** `HealthExportService` streaming parser, `MockHealthService`, `HealthSnapshot`, `FactSheet` and tests. ✅ The HealthCard shows real numbers from a real export, and the fact-sheet text prints to the console.
 
