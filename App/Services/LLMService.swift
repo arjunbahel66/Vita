@@ -1,5 +1,39 @@
 import Foundation
 
+/// How far the download has got.
+///
+/// `fraction` is optional on purpose. Foundation's `Progress.fractionCompleted`
+/// reports 0 when the total size isn't known yet, which renders as an empty bar that
+/// looks exactly like a hang — the first run of this screen spent two minutes
+/// downloading while appearing frozen. When the total is unknown the UI shows an
+/// indeterminate spinner instead of lying with a 0% bar.
+struct LoadProgress: Equatable {
+    var fraction: Double?
+    var completedBytes: Int64?
+    var totalBytes: Int64?
+
+    /// Whether the progress handler has been called at all. Distinguishes "downloading,
+    /// can't measure" from "nothing is happening".
+    var updates: Int = 0
+
+    static let unknown = LoadProgress()
+
+    /// "247 MB of 1.1 GB", or just "247 MB" when the total isn't known.
+    var byteSummary: String? {
+        guard let completedBytes, completedBytes > 0 else { return nil }
+        let done = Self.megabytes(completedBytes)
+        guard let totalBytes, totalBytes > 0 else { return done }
+        return "\(done) of \(Self.megabytes(totalBytes))"
+    }
+
+    private static func megabytes(_ bytes: Int64) -> String {
+        let mb = Double(bytes) / 1_048_576
+        return mb >= 1024
+            ? String(format: "%.1f GB", mb / 1024)
+            : String(format: "%.0f MB", mb)
+    }
+}
+
 /// Where the model is in its lifecycle.
 ///
 /// `failed` is a first-class state rather than a thrown error that disappears: the
@@ -8,7 +42,7 @@ import Foundation
 /// rather than a dead screen. See CLAUDE.md section 4.4.
 enum LLMState: Equatable {
     case idle
-    case loading(Double)
+    case loading(LoadProgress)
     case ready
     case failed(String)
 

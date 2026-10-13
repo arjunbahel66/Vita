@@ -40,20 +40,32 @@ final class MLXLLMService: LLMService {
         guard !state.isReady else { return }
 
         MLX.GPU.set(cacheLimit: gpuCacheLimit)
-        state = .loading(0)
+        state = .loading(.unknown)
         let started = Date()
+        var updates = 0
 
         do {
             let configuration = ModelConfiguration(id: modelID)
 
-            // First launch downloads ~1 GB; later launches read from disk and this
-            // reports no progress at all, which is why `.loading(0)` must render as a
-            // sensible state rather than an empty bar.
+            // First launch downloads ~1 GB; later launches read from disk and report
+            // almost nothing. Whatever the downloader can tell us is passed through
+            // verbatim — including "I don't know the total" — so the UI can be honest
+            // rather than showing a motionless bar.
             let loaded = try await #huggingFaceLoadModelContainer(
                 configuration: configuration
             ) { progress in
+                let known = progress.totalUnitCount > 0
+                let snapshot = LoadProgress(
+                    fraction: known ? progress.fractionCompleted : nil,
+                    completedBytes: progress.completedUnitCount > 0 ? progress.completedUnitCount : nil,
+                    totalBytes: known ? progress.totalUnitCount : nil
+                )
                 Task { @MainActor [weak self] in
-                    self?.state = .loading(progress.fractionCompleted)
+                    guard let self else { return }
+                    updates += 1
+                    var next = snapshot
+                    next.updates = updates
+                    self.state = .loading(next)
                 }
             }
 

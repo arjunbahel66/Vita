@@ -56,12 +56,33 @@ struct ContentView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-            case let .loading(fraction):
-                ProgressView(value: fraction) {
-                    Text(fraction > 0 ? "Downloading…" : "Loading…")
-                        .font(.caption)
+            case let .loading(progress):
+                VStack(alignment: .leading, spacing: 6) {
+                    if let fraction = progress.fraction {
+                        ProgressView(value: fraction) {
+                            Text("Downloading…").font(.caption)
+                        }
+                        .tint(.accentColor)
+                    } else {
+                        // Total size unknown. A spinner says "working" honestly;
+                        // a bar stuck at zero says "hung" dishonestly.
+                        HStack(spacing: 8) {
+                            ProgressView()
+                            Text(progress.updates > 0 ? "Downloading…" : "Starting…")
+                                .font(.caption)
+                        }
+                    }
+
+                    if let summary = progress.byteSummary {
+                        Text(summary)
+                            .font(.system(.caption2, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Text("About 1 GB the first time. Later launches are quick.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
-                .tint(.accentColor)
 
             case .ready:
                 HStack {
