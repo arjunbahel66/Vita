@@ -363,7 +363,30 @@ Stop at each ✅ checkpoint and confirm it works before moving on.
 
   Headroom: 982 MB against roughly 2–3 GB available on a 6 GB device.
 
-- **M2 — Health export + FactSheet (~60 min).** `HealthExportService` streaming parser, `MockHealthService`, `HealthSnapshot`, `FactSheet` and tests. ✅ The HealthCard shows real numbers from a real export, and the fact-sheet text prints to the console.
+- **M2 — Health export + FactSheet. ✅ DONE.** Real export parsed on device.
+
+  Measured against a real 579 MB export (3.3 million records, back to 2018):
+
+  | | |
+  | :-- | :-- |
+  | Parse, on iPhone 14 Pro | **11 s** |
+  | Parse, on the Mac | 8.2 s |
+  | Retained afterwards | a few KB of snapshot |
+
+  **Three hazards were real, not theoretical.** Found by inspecting the actual file
+  before writing the parser:
+
+  1. **Step double-counting.** 1,322 Watch records and 995 iPhone records covered the
+     same 30 days. Summing them gives **17,308 steps/day** against an actual ~8,130 —
+     and looks entirely plausible. The parser keeps a per-source total and picks one
+     source per day, preferring a Watch, matched loosely because a rename had left the
+     same device under two names.
+  2. **Units are per-record.** Body mass came back in `lb`. Never assume kg.
+  3. **`InBed` and `Awake` are sleep records.** Counting them roughly doubles the night
+     and overlaps the real asleep stages.
+
+  Windowing is done by string-comparing the date prefix before constructing any `Date`,
+  which is what keeps 3.3 million records to seconds rather than minutes.
 
 - **M3 — Labs (~30 min).** `LabsCard`, range classification and tests. ✅ Confirmed labs show up in the fact sheet.
 
