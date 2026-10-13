@@ -166,7 +166,10 @@ public enum FactSheet {
     }
 
     /// "6240" -> "6,240"
-    static func grouped(_ value: Double) -> String {
+    ///
+    /// Public so the UI formats numbers the same way the fact sheet does. If the tile
+    /// and the model's input disagree about a number, one of them is lying.
+    public static func grouped(_ value: Double) -> String {
         let rounded = Int(value.rounded())
         let digits = String(abs(rounded))
         var result = ""
@@ -183,7 +186,7 @@ public enum FactSheet {
 
     /// 6.583 -> "6h 35m". Minutes are rounded, and a 59.7-minute remainder rolls the
     /// hour rather than printing "6h 60m".
-    static func hoursAndMinutes(_ hours: Double) -> String {
+    public static func hoursAndMinutes(_ hours: Double) -> String {
         let totalMinutes = Int((hours * 60).rounded())
         return "\(totalMinutes / 60)h \(totalMinutes % 60)m"
     }

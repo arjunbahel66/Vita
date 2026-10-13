@@ -7,16 +7,19 @@ import SwiftUI
 import VitaCore
 
 struct ContentView: View {
-    // Sample data for now. M2 replaces this with a real Health export.
-    private let snapshot = HealthSnapshot.sample()
-    private let labs = LabValue.samples()
-
+    @State private var health = HealthExportService()
     @State private var llm = MLXLLMService()
     @State private var output = ""
     @State private var isGenerating = false
 
-    private var factSheet: String {
-        FactSheet.build(
+    /// Labs are still samples — M3 replaces this with values the user types and confirms.
+    private let labs = LabValue.samples()
+
+    /// Nil until an export has been imported. The fact sheet is the model's whole view,
+    /// so there is nothing to show it before then.
+    private var factSheet: String? {
+        guard let snapshot = health.snapshot else { return nil }
+        return FactSheet.build(
             snapshot: snapshot,
             labs: labs,
             context: ["User has told us they live with NAFLD."]
@@ -29,6 +32,8 @@ struct ContentView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
+                    HealthCard(service: health)
+                    Divider()
                     modelSection
                     Divider()
                     factSheetSection
@@ -171,17 +176,27 @@ struct ContentView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            Text(factSheet)
-                .font(.system(.footnote, design: .monospaced))
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+            if let factSheet {
+                Text(factSheet)
+                    .font(.system(.footnote, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
 
-            Text("\(factSheet.count) characters — budget is ~1200")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+                Text("\(factSheet.count) characters — budget is ~1200")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Import a Health export above and this fills in.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
         }
     }
 }
