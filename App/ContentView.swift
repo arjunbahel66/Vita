@@ -35,6 +35,8 @@ struct ContentView: View {
                     Divider()
                     InsightsCard(llm: llm, factSheet: factSheet)
                     Divider()
+                    AskCard(llm: llm, factSheet: factSheet)
+                    Divider()
                     factSheetSection
                 }
                 .padding()

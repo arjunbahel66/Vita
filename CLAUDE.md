@@ -392,7 +392,23 @@ Stop at each ✅ checkpoint and confirm it works before moving on.
 
 ### Sprint 2
 
-- **M4 — Insights (~75 min).** `PromptBuilder`, guided generation, `InsightsCard`, `InsightParser`. ✅ Real output on the phone cites real numbers, in the right structure.
+- **M4 — Insights. ✅ DONE.** Three sections on the phone, citing the user's real numbers.
+
+  **Qwen3-1.7B held the JSON format without constrained decoding.** This was the open
+  question after `MLXGuidedGeneration` turned out to be unreachable (section 2.1a), and
+  the answer is that showing the literal skeleton in the prompt is enough:
+
+  ```
+  Reply with ONLY a JSON object in exactly this shape, and nothing else:
+  { "summary": "...", "suggestions": [...], "doctorQuestions": [...] }
+  ```
+
+  A small model follows a shape it can see far more reliably than one described in
+  prose. `InsightParser`'s recovery path is still the safety net — fence stripping,
+  brace counting, `.raw` fallback — but it is not carrying the feature.
+
+  It also quoted the fact sheet's numbers rather than inventing any, which is what the
+  "never do math, only reword" design is for.
 - **M5 — Ask box (~45 min).** ✅ Answers 3 test questions within the boundary.
 - **M6 — Guardrails + disclaimer (~30 min).** ✅ Tests pass, and adversarial questions get the fallback message.
 - **M7 — Review (~30 min).** Run the checklist in section 6.
