@@ -420,5 +420,7 @@ Stop at each ✅ checkpoint and confirm it works before moving on.
 - All pure logic goes in `VitaCore` with tests. Run them with `swift test` from the package directory — it takes milliseconds and needs neither Xcode nor a device.
 - If a guardrail test fails on text that *should* pass, treat it as a bug in the rule, not in the test. The fact sheet contains strings like `140 mg/dL` and the prompt tells the model to quote numbers exactly, so an over-broad rule fires on correct output.
 - Arjun handles signing, device deployment and anything else in the Xcode GUI. When a step needs him, say exactly what to click.
+- **A new file in `VitaCore` shows up in Xcode as "Cannot find X in scope" until it rebuilds.** Files under `App/` appear automatically because it is a synchronized folder; a package's module is cached. ⌘B usually clears it, otherwise ⇧⌘K then ⌘B, otherwise File → Packages → Reset Package Caches. The command line is unaffected, so `xcodebuild` succeeding while Xcode shows errors means the code is fine and the index is stale.
+- **Never delete anything under DerivedData while Xcode is open.** Doing so corrupts the build database and produces `unable to load transferred PIF: the workspace contains multiple references with the same GUID`, which looks like a project misconfiguration and is not. Quit Xcode first, then clear.
 - Check the current `mlx-swift-lm` README for the real API before writing model code. Don't rely on memory.
 - Prefer the simplest thing that works. Six hours total.

@@ -44,7 +44,7 @@ final class MLXLLMService: LLMService {
     func load() async {
         guard !state.isReady else { return }
 
-        MLX.GPU.set(cacheLimit: gpuCacheLimit)
+        MLX.Memory.cacheLimit = gpuCacheLimit
         state = .loading(.unknown)
         let started = Date()
         var updates = 0
@@ -76,7 +76,7 @@ final class MLXLLMService: LLMService {
 
             container = loaded
             metrics.loadSeconds = Date().timeIntervalSince(started)
-            metrics.peakMemoryBytes = MLX.GPU.peakMemory
+            metrics.peakMemoryBytes = MLX.Memory.peakMemory
             state = .ready
         } catch {
             container = nil
@@ -88,7 +88,7 @@ final class MLXLLMService: LLMService {
     /// so iOS reclaims the GPU allocation instead of killing the app.
     func unload() {
         container = nil
-        MLX.GPU.clearCache()
+        MLX.Memory.clearCache()
         state = .idle
     }
 
@@ -124,7 +124,7 @@ final class MLXLLMService: LLMService {
                     }
                     self.metrics.generateSeconds = Date().timeIntervalSince(started)
                     self.metrics.chunks = chunks
-                    self.metrics.peakMemoryBytes = MLX.GPU.peakMemory
+                    self.metrics.peakMemoryBytes = MLX.Memory.peakMemory
                     continuation.finish()
                 } catch {
                     self.metrics.generateSeconds = Date().timeIntervalSince(started)
