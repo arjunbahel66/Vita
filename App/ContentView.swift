@@ -8,12 +8,10 @@ import VitaCore
 
 struct ContentView: View {
     @State private var health = HealthExportService()
+    @State private var labs = LabsStore()
     @State private var llm = MLXLLMService()
     @State private var output = ""
     @State private var isGenerating = false
-
-    /// Labs are still samples — M3 replaces this with values the user types and confirms.
-    private let labs = LabValue.samples()
 
     /// Nil until an export has been imported. The fact sheet is the model's whole view,
     /// so there is nothing to show it before then.
@@ -21,7 +19,7 @@ struct ContentView: View {
         guard let snapshot = health.snapshot else { return nil }
         return FactSheet.build(
             snapshot: snapshot,
-            labs: labs,
+            labs: labs.confirmedLabValues,
             context: ["User has told us they live with NAFLD."]
         )
     }
@@ -34,12 +32,15 @@ struct ContentView: View {
                 VStack(alignment: .leading, spacing: 24) {
                     HealthCard(service: health)
                     Divider()
+                    LabsCard(store: labs)
+                    Divider()
                     modelSection
                     Divider()
                     factSheetSection
                 }
                 .padding()
             }
+            .scrollDismissesKeyboard(.interactively)
         }
     }
 
